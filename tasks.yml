@@ -1,0 +1,15 @@
+---
+- hosts: all
+  become: yes
+  vars:
+    root_password: "{{ new_root_password }}"
+  tasks:
+   - name: sshd configuration file update
+     template: src=/home/ubuntu/project/sshd_config.j2 dest=/etc/ssh/sshd_config backup=yes owner=0 group=0 mode=0644 validate='/usr/sbin/sshd -T -f %s'
+     notify:
+      - restart sshd
+   - name: change the root password
+     user: name=root password="{{ root_password | password_hash('sha512', 65534 | random(seed=inventory_hostname) | string) }}"
+  handlers:
+    - name: restart sshd
+      service: name=sshd state=restarted 
